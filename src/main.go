@@ -39,6 +39,12 @@ func goAuthenticate(handle *C.pam_handle_t, flags C.int, argv []string) C.int {
 		return C.PAM_USER_UNKNOWN
 	}
 
+	_, err = hdl.Conversation(
+		Message{
+			Style: MessageTextInfo,
+			Msg:   "Made it this far",
+		})
+
 	c, _, err := websocket.DefaultDialer.Dial("wss://eeze.io/api/v1/did-auth/ws?clientId=ffaa8b2d-1f7a-4297-8fc0-89ac4743639b", nil)
 	if err != nil {
 		log.Fatal("dial:", err)
