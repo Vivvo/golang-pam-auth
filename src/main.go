@@ -11,9 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"log"
-	"net/url"
-	"os"
-	"os/signal"
 	"rsc.io/qr"
 	"unsafe"
 )
@@ -42,13 +39,7 @@ func goAuthenticate(handle *C.pam_handle_t, flags C.int, argv []string) C.int {
 		return C.PAM_USER_UNKNOWN
 	}
 
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
-
-	u := url.URL{Scheme: "wss", Host: "eeze.io", Path: "/api/v1/did-auth/ws", RawQuery: "clientId=ffaa8b2d-1f7a-4297-8fc0-89ac4743639b"}
-	log.Printf("connecting to %s", u.String())
-
-	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	c, _, err := websocket.DefaultDialer.Dial("wss://eeze.io/api/v1/did-auth/ws?clientId=ffaa8b2d-1f7a-4297-8fc0-89ac4743639b", nil)
 	if err != nil {
 		log.Fatal("dial:", err)
 	}
