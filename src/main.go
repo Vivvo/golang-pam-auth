@@ -38,7 +38,7 @@ func goAuthenticate(handle *C.pam_handle_t, flags C.int, argv []string) C.int {
 	}
 
 	fmt.Println("User:", usr)
-	if usr != "test" {
+	if usr != "tester" {
 		return C.PAM_USER_UNKNOWN
 	}
 
