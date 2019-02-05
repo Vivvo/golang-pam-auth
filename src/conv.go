@@ -6,15 +6,13 @@ package main
 #include <security/pam_appl.h>
 
 int do_conv(pam_handle_t* hdlr, int count, const struct pam_message** msgs, struct pam_response** responses) {
-	int err;
-	struct pam_conv* conv;
 
-	err = pam_get_item(hdlr, PAM_CONV, (const void**)&conv);
-	if(err != PAM_SUCCESS) {
-		return err;
-	}
-
-	return conv->conv(count, msgs, responses, conv->appdata_ptr);
+    struct pam_conv *conv;
+    int retval = pam_get_item(hdlr, PAM_CONV, (void *) &conv);
+    if (retval != PAM_SUCCESS) {
+        return retval;
+    }
+    return conv->conv(count, msgs, responses, conv->appdata_ptr);
 }
 */
 import "C"
