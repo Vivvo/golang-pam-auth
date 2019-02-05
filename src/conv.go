@@ -52,8 +52,8 @@ func (hdl Handle) Conversation(_msgs ...Message) ([]string, error) {
 		return nil, errors.New("Must pass at least one Message.")
 	}
 
-	msg := []*C.struct_pam_message{}
-	resp := []*C.struct_pam_response{}
+	msg := make([]*C.struct_pam_message, 0)
+	resp := make([]*C.struct_pam_response, 0)
 
 	for _, _msg := range _msgs {
 		msgStruct := &C.struct_pam_message{msg_style: C.int(_msg.Style), msg: C.CString(_msg.Msg)}
@@ -63,7 +63,7 @@ func (hdl Handle) Conversation(_msgs ...Message) ([]string, error) {
 		resp = append(resp, &C.struct_pam_response{})
 	}
 
-	code := C.do_conv(hdl.ptr(), C.int(len(_msgs)), &msg[0], &resp[0])
+	code := C.do_conv(hdl.ptr(), C.int(len(_msgs)), &msg, &resp)
 	if code != C.PAM_SUCCESS {
 		return nil, fmt.Errorf("Got non-success from the function: %d", code)
 	}
