@@ -6,8 +6,11 @@ package main
 import "C"
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
+	"log"
 	"rsc.io/qr"
 	"unsafe"
 )
@@ -22,7 +25,7 @@ type eezeMessage struct {
 //export goAuthenticate
 func goAuthenticate(handle *C.pam_handle_t, flags C.int, argv []string) C.int {
 	hdl := Handle{unsafe.Pointer(handle)}
-	fmt.Println("authenticate:", argv)
+	fmt.Println("Authenticate:", argv)
 
 	usr, err := hdl.GetUser()
 	if err != nil {
@@ -34,73 +37,73 @@ func goAuthenticate(handle *C.pam_handle_t, flags C.int, argv []string) C.int {
 		return C.PAM_USER_UNKNOWN
 	}
 
-	_, err = hdl.Conversation(
+	//_, err = hdl.Conversation(
+	//	Message{
+	//		Style: MessageTextInfo,
+	//		Msg:   "Made it this far",
+	//	})
+
+	c, _, err := websocket.DefaultDialer.Dial("wss://eeze.io/api/v1/did-auth/ws?clientId=ffaa8b2d-1f7a-4297-8fc0-89ac4743639b", nil)
+	if err != nil {
+		log.Fatal("dial:", err)
+	}
+	defer c.Close()
+
+	for {
+		_, message, err := c.ReadMessage()
+		if err != nil {
+			log.Println("read:", err)
+			return C.PAM_AUTH_ERR
+		}
+		msg := eezeMessage{}
+		json.Unmarshal(message, &msg)
+
+		switch msg.Typ {
+		case "did-auth":
+			qrcode, err := encodeQrCode(string(message))
+			if err != nil {
+				return C.PAM_AUTH_ERR
+			}
+
+			_, err = hdl.Conversation(
+				Message{
+					Style: MessageTextInfo,
+					Msg:   qrcode,
+				})
+
+			break
+		}
+	}
+
+	resps, err := hdl.Conversation(
 		Message{
-			Style: MessageTextInfo,
-			Msg:   "Made it this far",
+			Style: MessageEchoOff,
+			Msg:   "Password: ",
+		},
+	)
+
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return C.PAM_CONV_ERR
+	}
+
+	if resps[0] != "cake" {
+		return C.PAM_AUTH_ERR
+	}
+
+	resps, err = hdl.Conversation(
+		Message{
+			Style: MessageEchoOn,
+			Msg:   "Favourite colour: ",
 		})
 
-	//c, _, err := websocket.DefaultDialer.Dial("wss://eeze.io/api/v1/did-auth/ws?clientId=ffaa8b2d-1f7a-4297-8fc0-89ac4743639b", nil)
-	//if err != nil {
-	//	log.Fatal("dial:", err)
-	//}
-	//defer c.Close()
-	//
-	//for {
-	//	_, message, err := c.ReadMessage()
-	//	if err != nil {
-	//		log.Println("read:", err)
-	//		return C.PAM_AUTH_ERR
-	//	}
-	//	msg := eezeMessage{}
-	//	json.Unmarshal(message, &msg)
-	//
-	//	switch msg.Typ {
-	//	case "did-auth":
-	//		qrcode, err := encodeQrCode(string(message))
-	//		if err != nil {
-	//			return C.PAM_AUTH_ERR
-	//		}
-	//
-	//		_, err = hdl.Conversation(
-	//			Message{
-	//				Style: MessageTextInfo,
-	//				Msg:   qrcode,
-	//			})
-	//
-	//		break
-	//	}
-	//}
-	//
-	//resps, err := hdl.Conversation(
-	//	Message{
-	//		Style: MessageEchoOff,
-	//		Msg:   "Password: ",
-	//	},
-	//)
-	//
-	//if err != nil {
-	//	fmt.Println("Error: ", err)
-	//	return C.PAM_CONV_ERR
-	//}
-	//
-	//if resps[0] != "cake" {
-	//	return C.PAM_AUTH_ERR
-	//}
-	//
-	//resps, err = hdl.Conversation(
-	//	Message{
-	//		Style: MessageEchoOn,
-	//		Msg:   "Favourite colour: ",
-	//	})
-	//
-	//if err != nil {
-	//	fmt.Println("Error: ", err)
-	//	return C.PAM_CONV_ERR
-	//}
-	//
-	//fmt.Println("I can't believe you like the colour", resps[0])
-	//hdl.SetModuleData("fav-colour", resps[0])
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return C.PAM_CONV_ERR
+	}
+
+	fmt.Println("I can't believe you like the colour", resps[0])
+	hdl.SetModuleData("fav-colour", resps[0])
 
 	return C.PAM_SUCCESS
 }
