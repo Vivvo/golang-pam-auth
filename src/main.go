@@ -45,7 +45,8 @@ func goAuthenticate(handle *C.pam_handle_t, flags C.int, argv []string) C.int {
 
 	c, _, err := websocket.DefaultDialer.Dial("wss://eeze.io/api/v1/did-auth/ws?clientId=ffaa8b2d-1f7a-4297-8fc0-89ac4743639b", nil)
 	if err != nil {
-		log.Fatal("dial:", err)
+		log.Println("dial:", err)
+		return C.PAM_AUTH_ERR
 	}
 	defer c.Close()
 
