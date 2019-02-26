@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"rsc.io/qr"
 	"unsafe"
+	"log"
 )
 
 type eezeMessage struct {
@@ -21,18 +22,22 @@ type eezeMessage struct {
 
 //export goAuthenticate
 func goAuthenticate(handle *C.pam_handle_t, flags C.int, argv []string) C.int {
+
 	hdl := Handle{unsafe.Pointer(handle)}
 	fmt.Println("Authenticate:", argv)
 
 	usr, err := hdl.GetUser()
 	if err != nil {
+		log.Println("PAM_AUTH_ERR")
 		return C.PAM_AUTH_ERR
 	}
 
 	fmt.Println("User:", usr)
 	if usr != "tester" {
+		log.Println("PAM_USER_UNKNOWN")
 		return C.PAM_USER_UNKNOWN
 	}
+
 
 	_, err = hdl.Conversation(
 		Message{
