@@ -52,8 +52,8 @@ func (hdl Handle) Conversation(_msgs ...Message) ([]string, error) {
 		return nil, errors.New("Must pass at least one Message.")
 	}
 
-	msg := make([]*C.struct_pam_message, 0)
-	resp := make([]*C.struct_pam_response, 0)
+	msg := []*C.struct_pam_message{}
+	resp := []*C.struct_pam_response{}
 
 	for _, _msg := range _msgs {
 		msgStruct := &C.struct_pam_message{msg_style: C.int(_msg.Style), msg: C.CString(_msg.Msg)}
