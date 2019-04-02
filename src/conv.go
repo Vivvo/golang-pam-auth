@@ -63,10 +63,7 @@ func (hdl Handle) Conversation(_msgs ...Message) ([]string, error) {
 		resp = append(resp, &C.struct_pam_response{})
 	}
 
-	msg0 := msg[0]
-	resp0 := resp[0]
-
-	code := C.do_conv(hdl.ptr(), C.int(len(_msgs)), unsafe.Pointer(&msg0), unsafe.Pointer(&resp0))
+	code := C.do_conv(hdl.ptr(), C.int(len(_msgs)), unsafe.Pointer(&msg[0]), unsafe.Pointer(&resp[0]))
 	if code != C.PAM_SUCCESS {
 		return nil, fmt.Errorf("Got non-success from the function: %d", code)
 	}
